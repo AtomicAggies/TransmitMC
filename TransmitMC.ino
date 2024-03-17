@@ -27,10 +27,10 @@ String comm_msg;  //incoming blackbox msgs
 String xbee_msg;  //incoming groundstation msgs
 
 //State
-enum ActivationState { INACTIVE, ACTIVATED, A_AWAIT_RESPONSE } activation_state;
-enum PayloadState { NOT_INITIATED, INITIATED, P_AWAIT_RESPONSE } payload_state;
+enum ActivationState { INACTIVE = 11, ACTIVATED = 21, A_AWAIT_RESPONSE = 31 } activation_state;
+enum PayloadState { NOT_INITIATED = 12, INITIATED = 22, P_AWAIT_RESPONSE = 32} payload_state;
 enum RocketState{LAUNCH_PAD = 0,LAUNCH = 10,APOGEE = 20,LANDING = 30}rocket_state;
-enum AirbrakesState{NOT_DEPLOYED,DEPLOYED} airbrakes_state;
+enum AirbrakesState{NOT_DEPLOYED = 13,DEPLOYED = 23} airbrakes_state;
 //acceleration detection vars
 boolean is_accelerating = false;  //must be initially be false
 unsigned long time_accelerating = 0; 
@@ -56,6 +56,7 @@ void setup(){
   digitalWrite(PAYLOAD, LOW); //artifact/code left over from system or possibly previous payload
 
   deactivate_avionics();
+  rocket_state = LAUNCH_PAD;
 
   Serial.println("TransmitCode Setup Complete");
   delay(2000);
@@ -71,46 +72,62 @@ void loop(){
   if(Xbee.available()>0){ //read from ground station
     xbee_msg = Xbee.readStringUntil('\n');
     
-    if(xbee_msg.equals("AV_ACTIVATE\r")){
-      activate_avionics();
-      Xbee.println("AV_ACTIVE");
+    if(xbee_msg.equals("ACTIVATE\r")){  // FIXME might want to send several activation msgs
+      if(activation_state != ACTIVATED)
+        activate_avionics();
+      String s = "STATE," + String(ACTIVATED);
+      Xbee.println(s);
+      delay(50);
+      
+     
     }
     else if(xbee_msg.equals("DEACTIVATE\r")){
-      deactivate_avionics();
-      Xbee.println("AV_INACTIVE");
+      if(activation_state != INACTIVE)
+        deactivate_avionics();
+      String s = "STATE," + String(INACTIVE);
+      Xbee.println(s);
+      delay(50);
     }
-    //elif payload
-  }
+    //elif msg about the payload
+    
+  }// end if xbee available
 
 
   //
   // String data_accel = parse_accel_xyz(accel);
   // Xbee.println(data_accel);
 
-  //auto activation in case of failed messages
-  float tot_accel = calc_tot_accel(accel);
-  if(activation_state == INACTIVE){ 
-    if(is_accelerating == false && tot_accel > ACCEL_LAUNCH_THRESHOLD){ //first detected acceleration
-      is_accelerating = true;
-      accel_start_time = millis();
-    }
-    else if (is_accelerating == true && tot_accel > ACCEL_LAUNCH_THRESHOLD){   // acceleration detected in previous loop() iteration // I am still accelerating
-      unsigned long curr_time = millis();
-      time_accelerating = curr_time - accel_start_time;
-      if(time_accelerating > TIME_ACCEL_THRESHOLD){ // time accelerating is greater than threshold
-          activate_avionics();
-          Xbee.println("AV_ACTIVE");
-      }
-    }
-    else{ // I have stopped accelerating //this is to avoid false launches
-      is_accelerating = false;
-      time_accelerating = 0;
-    }
-  }
+  // if(rocket_state == LAUNCH_PAD){ 
+  //   float tot_accel = calc_tot_accel(accel);
+  //   if(is_accelerating == false && tot_accel > ACCEL_LAUNCH_THRESHOLD){ //first detected acceleration
+  //     accel_start_time = millis();
+  //     is_accelerating = true; 
+  //   }
+  //   else if (is_accelerating == true && tot_accel > ACCEL_LAUNCH_THRESHOLD){   // acceleration detected in previous loop() iteration // I am still accelerating
+  //     unsigned long curr_time = millis();
+  //     time_accelerating = curr_time - accel_start_time;
+  //     if(time_accelerating > TIME_ACCEL_THRESHOLD){ // time accelerating is greater than threshold
+  //         if(activation_state == INACTIVE){ //auto activation in case of failed messages
+  //           activate_avionics();
+  //           String s = "STATE," + ACTIVATED;
+  //           Xbee.println(s);
+  //         } 
+  //         rocket_state = LAUNCH;
+  //         String s2 = "STATE," + LAUNCH;
+  //         Xbee.println(s2);
+  //     }
+  //   }
+  //   else{ // I have stopped accelerating //this is to avoid false launches
+  //     is_accelerating = false;
+  //     time_accelerating = 0;
+  //   }
+  // }
+
 
   
 }
-
+// PRE: define Set,UNSET,PAYLOAD pins
+// POST: pins set to output
 void init_pin_modes(){
   pinMode(SET, OUTPUT);
   pinMode(UNSET, OUTPUT);
