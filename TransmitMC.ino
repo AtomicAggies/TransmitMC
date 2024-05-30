@@ -43,14 +43,14 @@ void setup(){
   Serial.begin(COMM_BAUD);
   Xbee.begin(XBEE_BAUD, SERIAL_8N1, 14, 32);
   init_pin_modes();
-  // // init accel
-  // if(!accel.begin()) {
-  //   Serial.println("ADXL343 failed begin");
-  // }
-  // else{
-  //   Serial.println("ADXL343 succesful begin");
-  // }
-  // accel.setRange(ADXL343_RANGE_16_G);
+  // init accel
+  if(!accel.begin()) {
+    Serial.println("ADXL343 failed begin");
+  }
+  else{
+    Serial.println("ADXL343 succesful begin");
+  }
+  accel.setRange(ADXL343_RANGE_16_G);
 
 
   digitalWrite(PAYLOAD, LOW); //artifact/code left over from system or possibly previous payload
@@ -66,13 +66,14 @@ void loop(){
   comm_msg = "";
   if(Comm.available()>0){ //read from blackbox
     comm_msg = Comm.readStringUntil('\n');
+    Xbee.println(comm_msg); //send blackbox message to groundstation
 
   }  
   xbee_msg = "";
   if(Xbee.available()>0){ //read from ground station
     xbee_msg = Xbee.readStringUntil('\n');
     
-    if(xbee_msg.equals("ACTIVATE\r")){  // FIXME might want to send several activation msgs
+    if(xbee_msg.equals("ACTIVATE\r")){  
       if(activation_state != ACTIVATED)
         activate_avionics();
       String s = "STATE," + String(ACTIVATED);
@@ -93,35 +94,35 @@ void loop(){
   }// end if xbee available
 
 
-  //
-  // String data_accel = parse_accel_xyz(accel);
-  // Xbee.println(data_accel);
+  
+  String data_accel = parse_accel_xyz(accel);
+  Xbee.println(data_accel);
 
-  // if(rocket_state == LAUNCH_PAD){ 
-  //   float tot_accel = calc_tot_accel(accel);
-  //   if(is_accelerating == false && tot_accel > ACCEL_LAUNCH_THRESHOLD){ //first detected acceleration
-  //     accel_start_time = millis();
-  //     is_accelerating = true; 
-  //   }
-  //   else if (is_accelerating == true && tot_accel > ACCEL_LAUNCH_THRESHOLD){   // acceleration detected in previous loop() iteration // I am still accelerating
-  //     unsigned long curr_time = millis();
-  //     time_accelerating = curr_time - accel_start_time;
-  //     if(time_accelerating > TIME_ACCEL_THRESHOLD){ // time accelerating is greater than threshold
-  //         if(activation_state == INACTIVE){ //auto activation in case of failed messages
-  //           activate_avionics();
-  //           String s = "STATE," + ACTIVATED;
-  //           Xbee.println(s);
-  //         } 
-  //         rocket_state = LAUNCH;
-  //         String s2 = "STATE," + LAUNCH;
-  //         Xbee.println(s2);
-  //     }
-  //   }
-  //   else{ // I have stopped accelerating //this is to avoid false launches
-  //     is_accelerating = false;
-  //     time_accelerating = 0;
-  //   }
-  // }
+  if(rocket_state == LAUNCH_PAD){ 
+    float tot_accel = calc_tot_accel(accel);
+    if(is_accelerating == false && tot_accel > ACCEL_LAUNCH_THRESHOLD){ //first detected acceleration
+      accel_start_time = millis();
+      is_accelerating = true; 
+    }
+    else if (is_accelerating == true && tot_accel > ACCEL_LAUNCH_THRESHOLD){   // acceleration detected in previous loop() iteration // I am still accelerating
+      unsigned long curr_time = millis();
+      time_accelerating = curr_time - accel_start_time;
+      if(time_accelerating > TIME_ACCEL_THRESHOLD){ // time accelerating is greater than threshold
+          if(activation_state == INACTIVE){ //auto activation in case of failed messages
+            activate_avionics();
+            String s = "STATE," + ACTIVATED;
+            Xbee.println(s);
+          } 
+          rocket_state = LAUNCH;
+          String s2 = "STATE," + LAUNCH;
+          Xbee.println(s2);
+      }
+    }
+    else{ // I have stopped accelerating //this is to avoid false launches
+      is_accelerating = false;
+      time_accelerating = 0;
+    }
+  }
 
 
   
