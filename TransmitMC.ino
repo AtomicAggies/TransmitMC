@@ -95,34 +95,34 @@ void loop(){
 
 
   
-  String data_accel = parse_accel_xyz(accel);
-  Xbee.println(data_accel);
+  // String data_accel = parse_accel_xyz(accel);
+  // Xbee.println(data_accel); //send accell to gs
 
-  if(rocket_state == LAUNCH_PAD){ 
-    float tot_accel = calc_tot_accel(accel);
-    if(is_accelerating == false && tot_accel > ACCEL_LAUNCH_THRESHOLD){ //first detected acceleration
-      accel_start_time = millis();
-      is_accelerating = true; 
-    }
-    else if (is_accelerating == true && tot_accel > ACCEL_LAUNCH_THRESHOLD){   // acceleration detected in previous loop() iteration // I am still accelerating
-      unsigned long curr_time = millis();
-      time_accelerating = curr_time - accel_start_time;
-      if(time_accelerating > TIME_ACCEL_THRESHOLD){ // time accelerating is greater than threshold
-          if(activation_state == INACTIVE){ //auto activation in case of failed messages
-            activate_avionics();
-            String s = "STATE," + ACTIVATED;
-            Xbee.println(s);
-          } 
-          rocket_state = LAUNCH;
-          String s2 = "STATE," + LAUNCH;
-          Xbee.println(s2);
-      }
-    }
-    else{ // I have stopped accelerating //this is to avoid false launches
-      is_accelerating = false;
-      time_accelerating = 0;
-    }
-  }
+  // if(rocket_state == LAUNCH_PAD){ 
+  //   float tot_accel = calc_tot_accel(accel);
+  //   if(is_accelerating == false && tot_accel > ACCEL_LAUNCH_THRESHOLD){ //first detected acceleration
+  //     accel_start_time = millis();
+  //     is_accelerating = true; 
+  //   }
+  //   else if (is_accelerating == true && tot_accel > ACCEL_LAUNCH_THRESHOLD){   // acceleration detected in previous loop() iteration // I am still accelerating
+  //     unsigned long curr_time = millis();
+  //     time_accelerating = curr_time - accel_start_time;
+  //     if(time_accelerating > TIME_ACCEL_THRESHOLD){ // time accelerating is greater than threshold
+  //         if(activation_state == INACTIVE){ //auto activation in case of failed messages
+  //           activate_avionics();
+  //           String s = "STATE," + ACTIVATED;
+  //           Xbee.println(s);
+  //         } 
+  //         rocket_state = LAUNCH;
+  //         String s2 = "STATE," + LAUNCH;
+  //         Xbee.println(s2);
+  //     }
+  //   }
+  //   else{ // I have stopped accelerating //this is to avoid false launches
+  //     is_accelerating = false;
+  //     time_accelerating = 0;
+  //   }
+  // }
 
 
   
