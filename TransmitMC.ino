@@ -89,13 +89,16 @@ void loop(){
       Xbee.println(s);
       delay(50);
     }
+    else if(xbee_msg.equals("AVFIX\r")){  
+      Comm.println("AVFIX"); //Send ACK to BlackBox
+    }
     //elif msg about the payload
     
   }// end if xbee available
 
 
   
-  // String data_accel = parse_accel_xyz(accel);
+  String data_accel = parse_accel_xyz(accel);
   // Xbee.println(data_accel); //send accell to gs
 
   // if(rocket_state == LAUNCH_PAD){ 
